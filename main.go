@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
 
 	"miniminiz/server"
@@ -15,26 +16,26 @@ func main() {
 		log.Fatalf("failed to initialize termui: %v", err)
 	}
 	defer ui.Close()
+	configFile := os.Args[1]
 
-	valueBuffer := make(chan server.ActiveItemValue, 100)
+	t, _ := server.NewServer(configFile)
 
-	go server.RunServer("127.0.0.1", "10051", valueBuffer)
+	go t.RunServer()
 
 	// var valueStore map[string]*cache.HostValueCache
 	valueStore := make(map[string]*server.HostValueCache)
 
-	hosts := server.Monitoring.GetHosts()
-	for name, items := range *hosts {
+	for name, items := range *t.Monitoring.GetHosts() {
 		valueStore[name] = server.NewHostValueCache(items)
 	}
 
 	go func() {
-		for item := range valueBuffer {
+		for item := range t.Cache {
 			valueStore[item.Host].SaveValue(item)
 		}
 	}()
 
-	hostlist := tui.NewHostList([]string{"localhost"})
+	hostlist := tui.NewHostList(t.Monitoring.GetHostnames())
 
 	grid := ui.NewGrid()
 	termWidth, termHeight := ui.TerminalDimensions()
@@ -68,10 +69,10 @@ func main() {
 			}
 		case <-ticker:
 
-			vals := valueStore["localhost"].GetValues("system.cpu.load")
+			vals := valueStore["LOBOT"].GetValues("system.cpu.load")
 			tui.UpdateTable(table1, vals)
 
-			vals2 := valueStore["localhost"].GetValues("system.sw.os")
+			vals2 := valueStore["LOBOT"].GetValues("system.sw.os")
 			tui.UpdateTable(table2, vals2)
 
 			ui.Render(grid)
