@@ -48,7 +48,7 @@ type ServerResponse struct {
 }
 
 type Server struct {
-	Server     ServerConfig
+	connection string
 	Monitoring MonitoringConfig
 	Cache      chan ActiveItemValue
 }
@@ -69,13 +69,13 @@ func NewServer(configFile string) (server *Server, err error) {
 	server = &Server{}
 	server.Cache = make(chan ActiveItemValue, config.Server.cacheSize)
 	server.Monitoring.config = config.Hosts
-	server.Server = config.Server
+	server.connection = config.Server.IP + ":" + config.Server.Port
 
 	return server, err
 }
 
 func (s *Server) RunServer() {
-	l, err := net.Listen("tcp", s.Server.IP+":"+s.Server.Port)
+	l, err := net.Listen("tcp", s.connection)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
