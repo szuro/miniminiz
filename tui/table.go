@@ -7,9 +7,9 @@ import (
 	"github.com/gizak/termui/v3/widgets"
 )
 
-func NewTable(metric string) (table *widgets.Table) {
+func NewTable(host, metric string) (table *widgets.Table) {
 	table = widgets.NewTable()
-	table.Title = metric
+	table.Title = host + ": " + metric
 	return
 }
 
