@@ -56,3 +56,10 @@ func (mc *MonitoringConfig) GetHostnames() (hostnames []string) {
 	}
 	return
 }
+
+func (mc *MonitoringConfig) GetKeys(hostname string) (keys []string) {
+	for _, v := range mc.GetConfig(hostname) {
+		keys = append(keys, v.Key)
+	}
+	return
+}
