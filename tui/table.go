@@ -25,7 +25,7 @@ func UpdateTable(t *widgets.Table, metrics []server.ActiveItemValue) {
 	// zone, offset := t_.Zone()
 	for _, val := range metrics {
 		tm := time.Unix(int64(val.Clock), int64(val.Ns))
-		time := fmt.Sprintf("%s", tm.Format("2006-01-02T15:04:05"))
+		time := fmt.Sprintf("%s", tm.Format("2006-01-02 15:04:05"))
 		value := fmt.Sprintf("%s", val.Value)
 		t.Rows = append(t.Rows, []string{time, value})
 	}
