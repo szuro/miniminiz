@@ -10,9 +10,13 @@ import (
 
 func NewTable(host, metric string) (table *widgets.Table) {
 	table = widgets.NewTable()
-	table.Title = fmt.Sprintf("%s:%s", host, metric)
+	RenameTable(table, host, metric)
 	table.Rows = append(table.Rows, []string{"Time", "Value"})
 	return
+}
+
+func RenameTable(table *widgets.Table, host, metric string) {
+	table.Title = fmt.Sprintf("%s:%s", host, metric)
 }
 
 func UpdateTable(t *widgets.Table, metrics []server.ActiveItemValue) {
