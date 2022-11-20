@@ -54,6 +54,8 @@ func main() {
 	for {
 		select {
 		case e := <-uiEvents:
+			currentHost := hostlist.Rows[hostlist.SelectedRow]
+			currentMetric := useri.MetricList.Rows[useri.MetricList.SelectedRow]
 			switch e.ID {
 			case "j", "<Down>":
 				activeList.ScrollDown()
@@ -71,15 +73,11 @@ func main() {
 				}
 			case "t":
 				if activeList == useri.MetricList {
-					currentHost := hostlist.Rows[hostlist.SelectedRow]
-					currentMetric := useri.MetricList.Rows[useri.MetricList.SelectedRow]
 					useri.BottomWidget = useri.WidgetCache.BottomTable
 					tui.RenameTable(useri.BottomWidget.(*widgets.Table), currentHost, currentMetric)
 				}
 			case "T":
 				if activeList == useri.MetricList {
-					currentHost := hostlist.Rows[hostlist.SelectedRow]
-					currentMetric := useri.MetricList.Rows[useri.MetricList.SelectedRow]
 					useri.TopWidget = useri.WidgetCache.TopTable
 					tui.RenameTable(useri.TopWidget.(*widgets.Table), currentHost, currentMetric)
 				}
