@@ -11,6 +11,12 @@ type UserInterface struct {
 	TopWidget    interface{}
 	BottomWidget interface{}
 	Grid         *ui.Grid
+	WidgetCache  widgetCache
+}
+
+type widgetCache struct {
+	TopTable    *widgets.Table
+	BottomTable *widgets.Table
 }
 
 func NewUserInterface() (userInt UserInterface) {
@@ -19,10 +25,11 @@ func NewUserInterface() (userInt UserInterface) {
 	termWidth, termHeight := ui.TerminalDimensions()
 	userInt.Grid.SetRect(0, 0, termWidth, termHeight)
 
-	p := NewTable("Dummy", "Dummy")
+	userInt.WidgetCache.TopTable = NewTable("Dummy", "Dummy")
+	userInt.WidgetCache.BottomTable = NewTable("Dummy", "Dummy")
 
-	userInt.TopWidget = p
-	userInt.BottomWidget = p
+	userInt.TopWidget = userInt.WidgetCache.TopTable
+	userInt.BottomWidget = userInt.WidgetCache.BottomTable
 
 	return
 }

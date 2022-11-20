@@ -73,14 +73,15 @@ func main() {
 				if activeList == useri.MetricList {
 					currentHost := hostlist.Rows[hostlist.SelectedRow]
 					currentMetric := useri.MetricList.Rows[useri.MetricList.SelectedRow]
-					// nie tworzyc nowej tablei za kazdym razem, bo to artefakty zosatwia
-					useri.BottomWidget = tui.NewTable(currentHost, currentMetric)
+					useri.BottomWidget = useri.WidgetCache.BottomTable
+					tui.RenameTable(useri.BottomWidget.(*widgets.Table), currentHost, currentMetric)
 				}
 			case "T":
 				if activeList == useri.MetricList {
 					currentHost := hostlist.Rows[hostlist.SelectedRow]
 					currentMetric := useri.MetricList.Rows[useri.MetricList.SelectedRow]
-					useri.TopWidget = tui.NewTable(currentHost, currentMetric)
+					useri.TopWidget = useri.WidgetCache.TopTable
+					tui.RenameTable(useri.TopWidget.(*widgets.Table), currentHost, currentMetric)
 				}
 			case "<Escape>":
 				activeList = useri.HostList
