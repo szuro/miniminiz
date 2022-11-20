@@ -19,9 +19,7 @@ func NewUserInterface() (userInt UserInterface) {
 	termWidth, termHeight := ui.TerminalDimensions()
 	userInt.Grid.SetRect(0, 0, termWidth, termHeight)
 
-	p := widgets.NewParagraph()
-	p.Text = "<> This row has 3 columns\n<- Widgets can be stacked up like left side\n<- Stacked widgets are treated as a single widget"
-	p.Title = "Demonstration"
+	p := NewTable("Dummy", "Dummy")
 
 	userInt.TopWidget = p
 	userInt.BottomWidget = p

@@ -3,12 +3,14 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 	"time"
 
 	"miniminiz/server"
 	"miniminiz/tui"
 
 	ui "github.com/gizak/termui/v3"
+	"github.com/gizak/termui/v3/widgets"
 )
 
 func main() {
@@ -67,15 +69,39 @@ func main() {
 				if activeList == useri.HostList {
 					activeList = useri.MetricList
 				}
+			case "t":
+				if activeList == useri.MetricList {
+					currentHost := hostlist.Rows[hostlist.SelectedRow]
+					currentMetric := useri.MetricList.Rows[useri.MetricList.SelectedRow]
+					// nie tworzyc nowej tablei za kazdym razem, bo to artefakty zosatwia
+					useri.BottomWidget = tui.NewTable(currentHost, currentMetric)
+				}
+			case "T":
+				if activeList == useri.MetricList {
+					currentHost := hostlist.Rows[hostlist.SelectedRow]
+					currentMetric := useri.MetricList.Rows[useri.MetricList.SelectedRow]
+					useri.TopWidget = tui.NewTable(currentHost, currentMetric)
+				}
 			case "<Escape>":
 				activeList = useri.HostList
 			case "q", "<C-c>", "e":
 				return
 			}
 		case <-ticker:
-
-			// update active widget values
+			top := useri.TopWidget.(*widgets.Table)
+			if top.Title != "Dummy:Dummy" {
+				topSplit := strings.Split(top.Title, ":")
+				topValues := valueStore[topSplit[0]].GetValues(topSplit[1])
+				tui.UpdateTable(top, topValues)
+			}
+			bottom := useri.BottomWidget.(*widgets.Table)
+			if bottom.Title != "Dummy:Dummy" {
+				bottomSplit := strings.Split(bottom.Title, ":")
+				bottomValues := valueStore[bottomSplit[0]].GetValues(bottomSplit[1])
+				tui.UpdateTable(bottom, bottomValues)
+			}
 		}
+		useri.SetGrid()
 		ui.Render(useri.Grid)
 	}
 
