@@ -7,13 +7,21 @@ import (
 
 	"net"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
-var HEADER = []byte{'Z', 'B', 'X', 'D', '\x01'}
+const (
+	ZABBIX_FLAG       = 1
+	COMPRESSION_FLAG  = 2
+	LARGE_PACKET_FLAG = 4
+)
+
+var HEADER = []byte{'Z', 'B', 'X', 'D', ZABBIX_FLAG}
 
 type ActiveItem struct {
 	Key     string `json:"key"`
-	Delay   int32  `json:"delay"`
+	Delay   int32  `json:"delay" yaml:"interval"`
 	Logsize int32  `json:"lastlogsize"`
 	MTime   int32  `json:"mtime"`
 }
@@ -39,8 +47,35 @@ type ServerResponse struct {
 	Info     string       `json:"info"`
 }
 
-func RunServer(listenIP string, ListenPort string, valueBuffer chan ActiveItemValue) {
-	l, err := net.Listen("tcp", listenIP+":"+ListenPort)
+type Server struct {
+	connection string
+	Monitoring MonitoringConfig
+	Cache      chan ActiveItemValue
+}
+
+func NewServer(configFile string) (server *Server, err error) {
+	file, err := os.ReadFile(configFile)
+	if err != nil {
+		return
+	}
+
+	config := Config{}
+	err = yaml.Unmarshal(file, &config)
+
+	if config.Server.cacheSize == 0 {
+		config.Server.cacheSize = 100
+	}
+
+	server = &Server{}
+	server.Cache = make(chan ActiveItemValue, config.Server.cacheSize)
+	server.Monitoring.config = config.Hosts
+	server.connection = config.Server.IP + ":" + config.Server.Port
+
+	return server, err
+}
+
+func (s *Server) RunServer() {
+	l, err := net.Listen("tcp", s.connection)
 	if err != nil {
 		fmt.Println("Error listening:", err.Error())
 		os.Exit(1)
@@ -53,11 +88,11 @@ func RunServer(listenIP string, ListenPort string, valueBuffer chan ActiveItemVa
 			fmt.Println("Error accepting: ", err.Error())
 			os.Exit(1)
 		}
-		go handleRequest(conn, valueBuffer)
+		go s.handleRequest(conn)
 	}
 }
 
-func handleRequest(conn net.Conn, buffer chan ActiveItemValue) {
+func (s *Server) handleRequest(conn net.Conn) {
 	defer conn.Close()
 
 	agentRequest, _ := getDataFromConn(conn)
@@ -73,10 +108,10 @@ func handleRequest(conn net.Conn, buffer chan ActiveItemValue) {
 		itemCount := len(agentRequest.Data)
 		rsp.Info = fmt.Sprintf("processed: %d; failed: 0; total: %d; seconds spent: 0.000182", itemCount, itemCount)
 		for _, item := range agentRequest.Data {
-			buffer <- item
+			s.Cache <- item
 		}
 	case "active checks":
-		rsp.Data = Monitoring.GetConfig(agentRequest.Host)
+		rsp.Data = s.Monitoring.GetConfig(agentRequest.Host)
 	}
 
 	out, _ = json.Marshal(rsp)
@@ -101,8 +136,9 @@ func getDataFromConn(conn net.Conn) (agentRequest AgentRequest, err error) {
 		return
 	}
 
+	protocol_details := int(header[4])
 	fieldLen := 4
-	if header[4] != '\x01' {
+	if protocol_details&LARGE_PACKET_FLAG != 0 {
 		fieldLen = 8
 	}
 

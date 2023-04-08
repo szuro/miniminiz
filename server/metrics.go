@@ -13,25 +13,6 @@ type MonitoringConfig struct {
 	config CheckList
 }
 
-var Monitoring = MonitoringConfig{
-	config: CheckList{
-		"localhost": {
-			{
-				Key:     "system.cpu.load",
-				Delay:   60,
-				Logsize: 0,
-				MTime:   0,
-			},
-			{
-				Key:     "system.sw.os",
-				Delay:   60,
-				Logsize: 0,
-				MTime:   0,
-			},
-		},
-	},
-}
-
 func (mc *MonitoringConfig) GetConfig(hostname string) (items []ActiveItem) {
 	mc.Lock()
 	items = mc.config[hostname]
@@ -64,5 +45,21 @@ func (mc *MonitoringConfig) UpdateOrAddItem(hostname string, check ActiveItem) {
 
 func (mc *MonitoringConfig) GetHosts() (hosts *CheckList) {
 	hosts = &mc.config
+	return
+}
+
+func (mc *MonitoringConfig) GetHostnames() (hostnames []string) {
+	hostnames = make([]string, 0, len(mc.config))
+
+	for k, _ := range mc.config {
+		hostnames = append(hostnames, k)
+	}
+	return
+}
+
+func (mc *MonitoringConfig) GetKeys(hostname string) (keys []string) {
+	for _, v := range mc.GetConfig(hostname) {
+		keys = append(keys, v.Key)
+	}
 	return
 }
